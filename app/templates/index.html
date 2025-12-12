@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}FinGuard — Home{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <h2>Overview</h2>
+      <p class="muted">Beginner-friendly pipeline: preview → train → predict. Use the buttons in the header to navigate.</p>
+    </div>
+    <div style="text-align:right">
+      {% if dataset_exists %}
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="status-dot ok-dot"></span>
+          <div style="font-weight:700">Dataset detected</div>
+        </div>
+      {% else %}
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="status-dot warn-dot"></span>
+          <div style="font-weight:700">Dataset missing</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">
+    <div style="flex:1;min-width:240px">
+      <h3 style="margin:0 0 8px 0">Dataset</h3>
+      {% if dataset_exists %}
+        <p class="muted">Found at <code style="background:rgba(255,255,255,0.03);padding:4px 6px;border-radius:6px;">{{ data_path }}</code></p>
+        <a class="btn" href="{{ url_for('preview') }}">Open Preview</a>
+      {% else %}
+        <p class="muted">Place <code>creditcard-database.csv</code> into <code>/data</code> to continue.</p>
+      {% endif %}
+    </div>
+
+    <div style="flex:1;min-width:240px">
+      <h3 style="margin:0 0 8px 0">Model</h3>
+      {% if model_exists %}
+        <p class="muted">Model trained and available in <code>models/</code>.</p>
+        <a class="btn" href="{{ url_for('predict') }}">Predict</a>
+        <a class="btn" style="margin-left:8px" href="{{ url_for('metrics') }}">View metrics</a>
+      {% else %}
+        <p class="muted">No trained model yet.</p>
+        <a class="btn" href="{{ url_for('train') }}">Train now</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

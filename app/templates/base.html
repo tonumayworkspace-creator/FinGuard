@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}FinGuard{% endblock %}</title>
+
+  <style>
+    /* Compact, modern theme for FinGuard (compact spacing, readable micro UI) */
+    :root{
+      --bg: #071124;
+      --panel: rgba(255,255,255,0.02);
+      --muted: #9fb0c3;
+      --accent-1: #7c3aed;
+      --accent-2: #06b6d4;
+      --accent-3: #f97316;
+      --radius: 10px;
+      --card-pad: 12px;
+      --shadow: 0 8px 28px rgba(6,10,20,0.6);
+    }
+
+    html,body { height:100%; margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; background: linear-gradient(180deg,#06111c 0%, #071827 60%); color:#e6eef6; }
+
+    .wrap { max-width:1000px; margin:18px auto; padding:12px; }
+
+    /* Header */
+    header.site-header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+    .brand { display:flex; gap:10px; align-items:center; }
+    .logo { width:44px; height:44px; border-radius:8px; background: conic-gradient(from 200deg, var(--accent-1), var(--accent-2), var(--accent-3)); display:flex; align-items:center; justify-content:center; font-weight:700; color: white; font-size:14px; box-shadow: 0 6px 18px rgba(0,0,0,0.6); }
+    .brand h1 { margin:0; font-size:16px; line-height:1; }
+    .brand p { margin:0; font-size:11px; color:var(--muted); }
+
+    nav.nav { display:flex; gap:8px; align-items:center; }
+    a.nav-btn { padding:6px 10px; background:var(--panel); color: #eaf6ff; text-decoration:none; border-radius:8px; font-size:13px; border:1px solid rgba(255,255,255,0.03); }
+    a.nav-btn.small { padding:6px 8px; font-size:12px; }
+
+    /* Grid */
+    main.grid { display:grid; grid-template-columns: 1fr 300px; gap:12px; align-items:start; }
+
+    /* Card */
+    .card { background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01)); border-radius: var(--radius); padding: var(--card-pad); box-shadow: var(--shadow); border:1px solid rgba(255,255,255,0.03); }
+    .card.compact { padding:10px; }
+
+    /* Typography smaller */
+    h2 { margin:0 0 6px 0; font-size:15px; }
+    h3 { margin:0 0 6px 0; font-size:13px; }
+    p.muted { color:var(--muted); margin:6px 0 0 0; font-size:12px; }
+
+    .status { display:flex; gap:10px; align-items:center; font-size:13px; }
+    .dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+    .ok { background: linear-gradient(90deg,#6ee7b7,#10b981); }
+    .warn { background: linear-gradient(90deg,#fca5a5,#fb7185); }
+
+    /* Compact table */
+    table.data { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
+    table.data th, table.data td { text-align:left; padding:6px 8px; border-bottom:1px dashed rgba(255,255,255,0.03); }
+    th { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; }
+
+    /* Controls */
+    .btn { display:inline-block; padding:8px 10px; background:linear-gradient(90deg,var(--accent-1), var(--accent-2)); color:white; text-decoration:none; border-radius:8px; font-size:13px; border:none; cursor:pointer; box-shadow: 0 6px 18px rgba(10,12,20,0.45); }
+    .btn.ghost { background:transparent; border:1px solid rgba(255,255,255,0.04); color: #e6eef6; }
+    .small-note { font-size:11px; color:var(--muted); }
+
+    /* Inputs compact */
+    input[type="text"], input[type="number"], select { width:100%; padding:8px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:#e6eef6; font-size:13px; }
+
+    /* Footer */
+    footer { margin-top:16px; text-align:center; font-size:12px; color:var(--muted); }
+
+    /* Tooltip helper for compact hints */
+    .help { font-size:12px; color:var(--muted); margin-left:8px; cursor:help; }
+    .help[title]:hover::after{
+      content: attr(title);
+      position: absolute;
+      background: #0a1220;
+      color:#fff;
+      padding:8px 10px;
+      border-radius:8px;
+      font-size:12px;
+      top:34px;
+      left:0;
+      white-space:nowrap;
+      z-index:9999;
+      box-shadow:0 6px 18px rgba(0,0,0,0.6);
+    }
+
+    /* Responsive */
+    @media (max-width:980px){
+      main.grid { grid-template-columns: 1fr; }
+      nav.nav { gap:6px; }
+      .brand h1 { font-size:15px; }
+      .logo { width:40px; height:40px; font-size:13px; }
+    }
+  </style>
+
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-header">
+      <div class="brand">
+        <div class="logo">FG</div>
+        <div>
+          <h1>FinGuard</h1>
+          <p class="small-note">Compact dev UI — Credit-card fraud</p>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="primary">
+        <a class="nav-btn small" href="{{ url_for('preview') }}" title="Preview dataset">Preview</a>
+        <a class="nav-btn small" href="{{ url_for('train') }}" title="Train model">Train</a>
+        <a class="nav-btn small" href="{{ url_for('predict') }}" title="Predict">Predict</a>
+        <a class="nav-btn small" href="{{ url_for('metrics') }}" title="Metrics">Metrics</a>
+      </nav>
+    </header>
+
+    <main class="grid">
+      <section>
+        {% block content %}{% endblock %}
+      </section>
+
+      <aside>
+        <div class="card compact">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <h3 style="margin-bottom:6px">Quick info</h3>
+              <p class="small-note" style="margin:0">Local dev: use model artifacts in <code>models/</code></p>
+            </div>
+          </div>
+
+          <div style="margin-top:10px; display:grid; gap:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span class="dot ok"></span>
+                <div style="font-size:13px">Environment</div>
+              </div>
+              <div class="small-note">Flask · scikit-learn</div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span class="dot warn"></span>
+                <div style="font-size:13px">Dataset</div>
+              </div>
+              <div class="small-note" style="max-width:145px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">{{ data_path if data_path else 'data/creditcard-database.csv' }}</div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:6px;">
+              <a class="nav-btn small" href="{{ url_for('preview') }}">Open</a>
+              <a class="nav-btn small" style="margin-left:6px" href="{{ url_for('train') }}">Train</a>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      <small>Development UI — not for production. Use model artifacts from <code>models/</code>.</small>
+    </footer>
+  </div>
+</body>
+</html>

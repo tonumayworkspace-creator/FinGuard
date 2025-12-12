@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}FinGuard — API Docs{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2 style="margin:0 0 8px 0">API Documentation</h2>
+  <p class="muted">Interactive OpenAPI (Swagger UI) for the FinGuard API. Use this page to test the <code>/predict_api</code> endpoint locally.</p>
+
+  <div id="swagger-ui" style="margin-top:12px"></div>
+
+  <div style="margin-top:12px">
+    <a class="btn" href="{{ url_for('index') }}">Home</a>
+    <a class="btn ghost" style="margin-left:8px" href="{{ url_for('train') }}">Retrain</a>
+  </div>
+</div>
+
+<!-- Swagger UI (CDN) -->
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4/swagger-ui.css" />
+<script src="https://unpkg.com/swagger-ui-dist@4/swagger-ui-bundle.js"></script>
+<script src="https://unpkg.com/swagger-ui-dist@4/swagger-ui-standalone-preset.js"></script>
+
+<script>
+  window.onload = function() {
+    const ui = SwaggerUIBundle({
+      url: "{{ openapi_url }}",
+      dom_id: '#swagger-ui',
+      presets: [
+        SwaggerUIBundle.presets.apis,
+        SwaggerUIStandalonePreset
+      ],
+      layout: "BaseLayout",
+      docExpansion: "none",
+      defaultModelsExpandDepth: -1
+    });
+    window.ui = ui;
+  };
+</script>
+{% endblock %}

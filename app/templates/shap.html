@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}FinGuard — SHAP Instances{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <h2 style="margin:0">Interactive SHAP Explorer</h2>
+      <p class="muted" style="margin-top:6px">Select a SHAP instance to view an interactive explanation (per-instance SHAP HTML generated at training).</p>
+    </div>
+
+    <div style="text-align:right">
+      <a class="btn" href="{{ url_for('train') }}">Retrain (generate SHAP)</a>
+      <a class="btn ghost" style="margin-left:8px" href="{{ url_for('index') }}">Home</a>
+    </div>
+  </div>
+
+  <div style="margin-top:12px; display:flex; gap:12px;">
+    <div style="min-width:260px;">
+      <label style="font-size:13px;color:var(--muted);">Choose SHAP instance</label>
+      <select id="shap-select" style="width:100%;padding:8px;border-radius:8px;background:transparent;color:#e6eef6;border:1px solid rgba(255,255,255,0.04);">
+        <option value="">-- select an instance --</option>
+        {% for it in instances %}
+        <option value="{{ it.file }}" data-preview='{{ it.preview|tojson }}'>Instance {{ it.id }}</option>
+        {% endfor %}
+      </select>
+
+      <div id="preview" style="margin-top:10px;font-size:13px;color:var(--muted);background:rgba(255,255,255,0.01);padding:8px;border-radius:6px;">
+        <strong>Feature preview</strong>
+        <div id="preview-contents" style="margin-top:6px">Select an instance to see a short feature preview.</div>
+      </div>
+    </div>
+
+    <div style="flex:1;">
+      <div id="shap-frame-holder" style="width:100%;height:720px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.03);">
+        <!-- iframe will be injected here -->
+        <iframe id="shap-iframe" src="" style="width:100%;height:100%;border:0;"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const select = document.getElementById('shap-select');
+  const iframe = document.getElementById('shap-iframe');
+  const previewContents = document.getElementById('preview-contents');
+
+  select.addEventListener('change', function(){
+    const val = this.value;
+    if(!val){
+      iframe.src = '';
+      previewContents.innerHTML = 'Select an instance to see a short feature preview.';
+      return;
+    }
+    // The file path is relative to project root (e.g. models/shap_html/shap_instance_0.html)
+    // We will request via /models/<path>
+    const encoded = encodeURIComponent(val);
+    // construct URL for models_static route: '/models/' + val
+    const url = '/models/' + val;
+    iframe.src = url;
+
+    // show preview (data-preview attribute of option)
+    const opt = this.selectedOptions[0];
+    const preview = opt.dataset.preview ? JSON.parse(opt.dataset.preview) : null;
+    if(preview){
+      const lines = [];
+      for(const [k,v] of Object.entries(preview)){
+        lines.push(`<div><strong>${k}</strong>: ${v}</div>`);
+      }
+      previewContents.innerHTML = lines.join('');
+    } else {
+      previewContents.innerHTML = 'No preview available for this instance.';
+    }
+  });
+});
+</script>
+{% endblock %}

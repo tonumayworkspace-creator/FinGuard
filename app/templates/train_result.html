@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}FinGuard — Training Result{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>Training completed</h2>
+  <p class="muted">Model saved to <code style="background:rgba(255,255,255,0.02);padding:3px 6px;border-radius:6px;">{{ model_path }}</code></p>
+
+  <div style="margin-top:12px">
+    <h3 style="margin:0 0 6px 0">ROC AUC</h3>
+    <p class="muted">{{ roc_auc if roc_auc is not none else "Not available" }}</p>
+  </div>
+
+  <div style="margin-top:12px">
+    <h3 style="margin:0 0 6px 0">Classification report</h3>
+    <pre style="white-space:pre-wrap;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px">{{ report }}</pre>
+  </div>
+
+  <div style="margin-top:12px">
+    <a class="btn" href="{{ url_for('metrics') }}">View metrics</a>
+    <a class="btn" style="margin-left:8px" href="{{ url_for('index') }}">Home</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}FinGuard — ROC Chart{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2 style="margin:0 0 8px 0">Interactive ROC Curve</h2>
+  <p class="muted">Use the hover and zoom controls. AUC is shown in the legend.</p>
+
+  <div id="roc-container" style="height:420px;"></div>
+
+  <div style="margin-top:12px">
+    <a class="btn" href="{{ url_for('train') }}">Retrain Model</a>
+    <a class="btn ghost" style="margin-left:8px" href="{{ url_for('index') }}">Home</a>
+  </div>
+</div>
+
+<!-- Plotly CDN -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+  // roc_json contains fpr, tpr, roc_auc
+  const roc = JSON.parse(`{{ roc_json|safe }}`);
+  const fpr = roc.fpr || [];
+  const tpr = roc.tpr || [];
+  const auc = roc.roc_auc || null;
+
+  const traceROC = {
+    x: fpr,
+    y: tpr,
+    mode: 'lines+markers',
+    name: auc ? `ROC (AUC = ${auc.toFixed(4)})` : 'ROC curve',
+    line: { color: '#7c3aed' },
+    marker: { size: 4 }
+  };
+
+  const traceDiag = {
+    x: [0,1],
+    y: [0,1],
+    mode: 'lines',
+    name: 'Random (diag)',
+    line: { dash: 'dash', color: '#888' }
+  };
+
+  const data = [traceROC, traceDiag];
+  const layout = {
+    margin: { t: 20, l: 50, r: 20, b: 50 },
+    xaxis: { title: 'False Positive Rate' },
+    yaxis: { title: 'True Positive Rate' },
+    hovermode: 'closest',
+    showlegend: true,
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(255,255,255,0.02)'
+  };
+
+  Plotly.newPlot('roc-container', data, layout, {responsive: true});
+</script>
+{% endblock %}

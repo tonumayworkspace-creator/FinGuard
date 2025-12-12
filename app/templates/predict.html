@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+{% block title %}FinGuard — Predict{% endblock %}
+
+{% block content %}
+<div class="card" id="predict-card">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <h2 style="margin:0">Make a prediction</h2>
+      <p class="muted" style="margin-top:6px">Friendly form — each field below has a short description explaining what to enter and an example value.</p>
+    </div>
+
+    <div style="text-align:right">
+      <button id="autofill-btn" class="btn" title="Auto-fill example values">Auto-fill example</button>
+      <button id="download-json" class="btn" style="margin-left:8px" title="Download example JSON for /predict_api">Download sample JSON</button>
+    </div>
+  </div>
+
+  <form id="predict-form" method="post" action="{{ url_for('predict') }}" style="margin-top:16px;">
+    <div id="fields-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;">
+
+      {% for col in feature_cols %}
+      <div class="field-block" data-col="{{ col }}">
+        <!-- friendly label gets populated by JS -->
+        <label for="{{ col }}" class="friendly-label" style="display:block;font-size:14px;font-weight:600;margin-bottom:6px;color:#fff;">
+          {{ col }}
+        </label>
+
+        <input
+          type="text"
+          name="{{ col }}"
+          id="{{ col }}"
+          inputmode="decimal"
+          aria-label="Value for {{ col }}"
+          placeholder="e.g. 0.0"
+          data-col-name="{{ col }}"
+          class="feature-input"
+          style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#e6eef6"
+        />
+
+        <div class="hint" style="margin-top:6px;font-size:12px;color:var(--muted);">
+          <strong class="hint-short">Numeric</strong> — <span class="hint-desc">enter a number</span>
+        </div>
+      </div>
+      {% endfor %}
+
+    </div>
+
+    <div style="margin-top:16px;display:flex;gap:8px;align-items:center">
+      <button id="submit-btn" class="btn" type="submit">Predict</button>
+      <a class="btn" href="{{ url_for('index') }}">Cancel</a>
+      <div id="validation-summary" style="margin-left:12px;color:#f0d9c9;font-size:13px;display:none"></div>
+    </div>
+  </form>
+</div>
+
+<!-- Confirmation drawer / modal -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.6);align-items:center;justify-content:center;">
+  <div style="width:620px;max-width:96%;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:18px;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.6)">
+    <h3 style="margin:0 0 8px 0">Confirm values and submit</h3>
+    <p class="muted" style="margin-top:0">Review the parsed numeric values below. Blank fields will be sent as <code>0</code>. Click <strong>Send to server</strong> to perform prediction.</p>
+
+    <div id="values-preview" style="max-height:320px;overflow:auto;margin-top:10px;background:rgba(255,255,255,0.01);padding:10px;border-radius:8px;font-size:13px;border:1px solid rgba(255,255,255,0.02)"></div>
+
+    <div style="margin-top:12px;text-align:right;">
+      <button id="cancel-submit" class="btn" type="button" style="background:transparent;border:1px solid rgba(255,255,255,0.04);margin-right:8px">Edit</button>
+      <button id="confirm-submit" class="btn" type="button">Send to server</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+  Enhanced client-side helpers:
+  - Create friendly labels + plain English hints from column names (heuristics).
+  - Autofill uses friendly example values.
+  - Download sample JSON uses friendly mapping.
+  - Submission validated and preview shows friendly labels with numeric values.
+*/
+
+(function(){
+  const inputs = Array.from(document.querySelectorAll('.feature-input'));
+  const fields = Array.from(document.querySelectorAll('.field-block'));
+  const autofillBtn = document.getElementById('autofill-btn');
+  const downloadBtn = document.getElementById('download-json');
+  const validateSummary = document.getElementById('validation-summary');
+  const confirmModal = document.getElementById('confirm-modal');
+  const valuesPreview = document.getElementById('values-preview');
+  const cancelSubmit = document.getElementById('cancel-submit');
+  const confirmSubmit = document.getElementById('confirm-submit');
+  const form = document.getElementById('predict-form');
+
+  // Heuristic: create a friendly label from column name
+  function friendlyLabel(col){
+    const c = col.toString();
+    const low = c.toLowerCase();
+
+    // common names
+    if(low === 'amount') return 'Transaction amount (in currency)';
+    if(low === 'time') return 'Time since first transaction (seconds)';
+    if(low === 'class') return 'Target (fraud=1, non-fraud=0)';
+
+    // V1..V28 likely PCA components
+    const vmatch = low.match(/^v(\d+)/i);
+    if(vmatch){
+      return `PCA component V${vmatch[1]} (de-identified feature)`;
+    }
+
+    // columns like 'step', 'amount', 'oldbalanceOrg', etc. give simple transformations
+    if(low.includes('balance') || low.includes('bal')) return beautify(col) + ' (balance)';
+    if(low.includes('fraud') || low.includes('isfraud') || low.includes('is_fraud')) return beautify(col) + ' (fraud flag)';
+    if(low.includes('age')) return beautify(col) + ' (age in years)';
+    if(low.includes('gender')) return beautify(col) + ' (gender code)';
+    if(low.includes('score')) return beautify(col) + ' (score / risk)';
+    // fallback: split snake/camel and titleize
+    return beautify(col);
+  }
+
+  function beautify(s){
+    // Split by underscores, dashes, camelCase, digits -> make readable
+    const parts = s.replace(/([a-z0-9])([A-Z])/g, '$1 $2') // camelCase to spaces
+                   .replace(/[_\-]+/g, ' ')
+                   .replace(/\s+/g, ' ')
+                   .trim();
+    return parts.split(' ').map(w => w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+  }
+
+  // Heuristic hint text
+  function hintText(col){
+    const low = col.toLowerCase();
+    if(low === 'amount') return 'Enter the transaction amount. Example: 12.50';
+    if(low === 'time') return 'Enter seconds since the first recorded transaction. Example: 4500';
+    if(low.startsWith('v') && /^\w*v\d+$/i.test(low)) return 'Numeric PCA component — values typically centered near 0 (e.g. -1.2, 0.03)';
+    if(low.includes('balance')) return 'Account balance value. Example: 1000.00';
+    if(low.includes('step')) return 'Step number or transaction index. Example: 1';
+    if(low.includes('score')) return 'Risk or score value. Example: 0.35';
+    if(low.includes('age')) return 'Age in years. Example: 30';
+    return 'Enter a numeric value (example: 0.0)';
+  }
+
+  // Heuristic example numeric value
+  function heuristicExample(col){
+    const low = col.toLowerCase();
+    if(low === 'amount') return (Math.random()*500).toFixed(2);
+    if(low === 'time') return Math.floor(Math.random()*86400);
+    if(low.startsWith('v') && /^\w*v\d+$/i.test(low)) return (Math.random()*4 - 2).toFixed(4);
+    if(low.includes('balance')) return (Math.random()*2000).toFixed(2);
+    if(low.includes('step')) return Math.floor(Math.random()*10)+1;
+    if(low.includes('age')) return Math.floor(Math.random()*60)+18;
+    return (Math.random()*10 - 5).toFixed(4);
+  }
+
+  // Populate friendly labels + hints and placeholder examples
+  fields.forEach(block => {
+    const col = block.dataset.col;
+    const labelEl = block.querySelector('.friendly-label');
+    const hintShort = block.querySelector('.hint-short');
+    const hintDesc = block.querySelector('.hint-desc');
+    const input = block.querySelector('.feature-input');
+
+    labelEl.textContent = friendlyLabel(col);
+    labelEl.setAttribute('title', col);
+
+    if(hintShort) hintShort.textContent = hintText(col).split('.')[0];
+    if(hintDesc) hintDesc.textContent = hintText(col);
+    if(input) input.setAttribute('placeholder', 'e.g. ' + heuristicExample(col));
+  });
+
+  // Autofill example values
+  autofillBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    inputs.forEach(inp => {
+      const col = inp.dataset.colName || inp.name || inp.id;
+      inp.value = heuristicExample(col);
+      inp.style.outline = 'none';
+    });
+    showFlash('Auto-filled example values — edit them before sending.', 3500);
+  });
+
+  // Download sample JSON for /predict_api (using friendly mapping)
+  downloadBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const featureObj = {};
+    inputs.forEach(inp => {
+      const col = inp.dataset.colName || inp.name || inp.id;
+      const raw = inp.value.trim();
+      const val = raw === '' ? Number(heuristicExample(col)) : Number(raw);
+      featureObj[col] = val;
+    });
+    const payload = { features: featureObj };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'finguard_predict_sample.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showFlash('Downloaded sample JSON for /predict_api', 2500);
+  });
+
+  // Validate numeric values and show confirmation modal
+  form.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const parsed = {};
+    const invalid = [];
+    inputs.forEach(inp => {
+      const key = inp.dataset.colName || inp.name || inp.id;
+      const raw = inp.value.trim();
+      if(raw === '') {
+        parsed[key] = 0;
+      } else {
+        const n = Number(raw);
+        if(Number.isFinite(n)) {
+          parsed[key] = n;
+          inp.style.outline = 'none';
+        } else {
+          invalid.push(key);
+          inp.style.outline = '2px solid rgba(255,88,88,0.35)';
+        }
+      }
+    });
+
+    if(invalid.length){
+      validateSummary.style.display = 'inline-block';
+      // Show friendly names for invalid keys
+      const friendlyInvalid = invalid.map(k => friendlyLabel(k));
+      validateSummary.textContent = 'Please correct non-numeric fields: ' + friendlyInvalid.join(', ');
+      window.scrollTo({ top: document.getElementById('predict-card').offsetTop - 20, behavior: 'smooth' });
+      return;
+    } else {
+      validateSummary.style.display = 'none';
+    }
+
+    // Build friendly preview
+    valuesPreview.innerHTML = '';
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    const tbody = document.createElement('tbody');
+
+    Object.keys(parsed).forEach(k => {
+      const tr = document.createElement('tr');
+      const td1 = document.createElement('td');
+      td1.textContent = friendlyLabel(k);
+      td1.style.padding = '6px 8px';
+      td1.style.width = '62%';
+      const td2 = document.createElement('td');
+      td2.textContent = parsed[k];
+      td2.style.padding = '6px 8px';
+      td2.style.textAlign = 'right';
+      tr.appendChild(td1); tr.appendChild(td2);
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    valuesPreview.appendChild(table);
+
+    // Show the modal
+    confirmModal.style.display = 'flex';
+    confirmModal.scrollTop = 0;
+  });
+
+  // Cancel/close modal
+  cancelSubmit.addEventListener('click', () => {
+    confirmModal.style.display = 'none';
+  });
+
+  // Confirm and submit the form (real POST)
+  confirmSubmit.addEventListener('click', () => {
+    inputs.forEach(i => i.style.outline = 'none');
+    confirmModal.style.display = 'none';
+    form.submit();
+  });
+
+  // Small helper to show a quick message near the form
+  function showFlash(text, ms=2000){
+    const el = document.getElementById('validation-summary');
+    el.style.display = 'inline-block';
+    el.textContent = text;
+    setTimeout(()=>{ el.style.display = 'none'; }, ms);
+  }
+
+})();
+</script>
+
+{% endblock %}

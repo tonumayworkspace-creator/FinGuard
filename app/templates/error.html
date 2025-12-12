@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}FinGuard — Error{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2 style="color:#ffccd5">Error</h2>
+  <p class="muted">{{ message }}</p>
+  <div style="margin-top:12px">
+    <a class="btn" href="{{ url_for('index') }}">Back to home</a>
+  </div>
+</div>
+{% endblock %}

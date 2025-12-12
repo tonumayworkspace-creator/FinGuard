@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}FinGuard — Prediction{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <h2>Prediction result</h2>
+      <p class="muted">Model output and probabilities</p>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:14px;font-weight:800">Predicted: <span style="color:#fff;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));padding:6px 10px;border-radius:8px;margin-left:8px">{{ predicted }}</span></div>
+    </div>
+  </div>
+
+  {% if prob_map %}
+  <div style="margin-top:12px">
+    <h3 style="margin:0 0 8px 0">Class probabilities</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      {% for cls, p in prob_map.items() %}
+      <div style="background:rgba(255,255,255,0.02);padding:8px 12px;border-radius:10px;min-width:120px;">
+        <div style="font-size:13px;color:var(--muted)">Class {{ cls }}</div>
+        <div style="font-weight:700;font-size:16px;margin-top:6px">{{ (p*100)|round(2) }}%</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div style="margin-top:14px">
+    <h3 style="margin:0 0 8px 0">Inputs</h3>
+    <table class="data">
+      <thead><tr><th>Feature</th><th>Value</th></tr></thead>
+      <tbody>
+        {% for k, v in input_df.items() %}
+        <tr><td>{{ k }}</td><td>{{ v }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:12px">
+    <a class="btn" href="{{ url_for('predict') }}">Predict again</a>
+    <a class="btn" style="margin-left:8px" href="{{ url_for('index') }}">Home</a>
+  </div>
+</div>
+{% endblock %}
