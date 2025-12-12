@@ -1,0 +1,36 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# VS Code files
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Data and model artifacts (do NOT commit raw dataset or models)
+data/
+models/
+*.csv
+*.pkl
+
+# Logs and runtime files
+*.log
+*.sqlite
+*.db
+
+# Packaging
+dist/
+build/
+*.egg-info/
+
+# Temporary
+*.tmp
