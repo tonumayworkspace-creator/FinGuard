@@ -1,77 +1,31 @@
-# FinGuard --- Credit Card Fraud Detection System
+# FinGuard — Credit Card Fraud Detection System
 
-A practical Data Science + AI Engineering project showcasing end-to-end
-ML development, model evaluation, and a user-friendly prediction
-interface.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Language](https://img.shields.io/badge/Python-3.13-brightgreen)](https://www.python.org/)
+[![Framework](https://img.shields.io/badge/Flask-Web-yellowgreen)](https://flask.palletsprojects.com/)
+[![Modeling](https://img.shields.io/badge/Modeling-scikit--learn-orange)](https://scikit-learn.org/)
 
-## 🔍 Project Overview
+> FinGuard is an end-to-end credit-card fraud detection project (Flask UI + scikit-learn model + explainability).  
+> Clear documentation, reproducible artifacts, and an interactive UI suitable for portfolio presentation.
 
-FinGuard is a full-stack fraud detection system designed to identify
-suspicious credit card transactions in real time. This project
-demonstrates the complete lifecycle of a Data Science & AI Engineering
-workflow: - Data preprocessing and feature handling - Addressing class
-imbalance - Model training and statistical evaluation - A compact,
-interactive Flask-based UI - A prediction API suitable for integration -
-Versioned model artifacts and reproducibility practices
+---
 
-## 📁 Dataset
+## Table of contents
 
-Dataset file used: `creditcard-database.csv`
+- [Quick demo](#quick-demo)
+- [What this project contains](#what-this-project-contains)
+- [Tech stack & skills demonstrated](#tech-stack--skills-demonstrated)
+- [How it works (high-level architecture)](#how-it-works-high-level-architecture)
+- [Run locally (quick start)](#run-locally-quick-start)
+- [Modeling details & metrics](#modeling-details--metrics)
+- [API docs](#api-docs)
+- [Screenshots](#screenshots)
+- [Author](#author)
+- [Future enhancements](#future-enhancements)
 
-## 🧠 Machine Learning Pipeline
+---
 
-### 1. Preprocessing
+## Quick demo
 
--   Stratified train-test split
--   Numeric conversion + simple validation
--   Support for future scaling and transformation pipelines
+Open the app locally after running training:
 
-### 2. Model Training
-
--   Logistic Regression baseline
--   Handles class imbalance using class_weight='balanced'
-
-### 3. Evaluation
-
--   ROC AUC
--   Precision, Recall, F1
--   Full classification report
-
-## 📊 Model Artifacts
-
-Stored in:
-
-    models/
-     ├── fin_guard_model.pkl
-     └── model_metrics.json
-
-## 🖥️ Application Features
-
--   Dataset preview
--   Model training UI
--   Prediction form with hints, autofill, confirmation modal
--   `/predict_api` endpoint
-
-## 🧩 Tech Stack
-
-Python, Flask, scikit-learn, Pandas, NumPy, HTML/CSS/JS
-
-## 📦 Project Structure
-
-    FinGuard/
-    │── app/
-    │── data/
-    │── models/
-    │── requirements.txt
-    └── README.md
-
-## 🚀 Running the Project
-
-    python -m venv venv
-    venv\Scripts\activate
-    pip install -r requirements.txt
-    python app/app.py
-
-## 👤 Author
-
-Tonumay Bhattacharya
